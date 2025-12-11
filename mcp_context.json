@@ -1,0 +1,78 @@
+{
+  "project": "Client-Side Meme Remix Generator",
+  "description": "MCP context describing lightweight background servers (agents) to support a client-side in-browser meme/remix app.",
+  "servers": [
+    {
+      "id": "link_service",
+      "name": "Link Service",
+      "purpose": "Generate short, shareable permalinks for exported remixes; optionally host small blobs or redirect to CDN storage.",
+      "run_mode": "background/persistent",
+      "triggers": ["HTTP createLink", "cron:cleanup_expired_links"],
+      "inputs": ["image blob or storage key", "metadata: title, author, templateId, privacy"],
+      "outputs": ["short URL", "signed redirect URL"],
+      "endpoints": {"POST /links": "create link", "GET /links/:id": "resolve or redirect"},
+      "constraints": {"max_ttl_days": 365, "rate_limit_rps": 20}
+    },
+    {
+      "id": "template_manager",
+      "name": "Template Manager",
+      "purpose": "Host and version template packs (free/paid/sponsored). Provide search, preview generation, and access controls.",
+      "run_mode": "background/persistent",
+      "triggers": ["HTTP uploadTemplate", "cron:generate_previews", "admin:webhook"],
+      "inputs": ["template assets", "metadata: tags, price, sponsor"],
+      "outputs": ["template manifests", "preview thumbnails"],
+      "endpoints": {"GET /templates": "list/search", "POST /templates": "upload"}
+    },
+    {
+      "id": "moderation",
+      "name": "Moderation Agent",
+      "purpose": "Automated content safety checks (NSFW, hate symbols, personal info) on uploads and shared links; queue human review when needed.",
+      "run_mode": "background/persistent",
+      "triggers": ["onUpload", "onLinkCreate"],
+      "inputs": ["image blob", "text overlays", "uploader metadata"],
+      "outputs": ["allow|block|needs_review", "reasons, confidence scores"],
+      "endpoints": {"POST /moderate": "submit item", "GET /moderate/:id": "status"},
+      "constraints": {"max_latency_ms": 2000}
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics Agent",
+      "purpose": "Collect anonymized usage events, share metrics, and power A/B tests and growth hooks.",
+      "run_mode": "background/streaming",
+      "triggers": ["event:export", "event:share", "cron:aggregate_daily"],
+      "inputs": ["event name", "anon user id", "metadata"],
+      "outputs": ["aggregated metrics", "dashboards", "growth recommendations"],
+      "endpoints": {"POST /events": "ingest event", "GET /metrics": "query"}
+    },
+    {
+      "id": "storage_cdn",
+      "name": "Storage/CDN Gateway",
+      "purpose": "Store user exports, template assets, and thumbnails; serve files via CDN or signed URLs.",
+      "run_mode": "on-demand + background maintenance",
+      "triggers": ["PUT /upload", "cron:optimize_images"],
+      "inputs": ["binary blobs", "metadata"],
+      "outputs": ["storage key", "signed URL"],
+      "endpoints": {"PUT /upload": "store blob", "GET /signed/:key": "signed URL"}
+    },
+    {
+      "id": "payments",
+      "name": "Payments & Licenses",
+      "purpose": "Handle donations, one-off template purchases, license issuance, and webhooks from payment providers.",
+      "run_mode": "background/persistent",
+      "triggers": ["HTTP paymentWebhook", "HTTP createCheckoutSession"],
+      "inputs": ["checkout request", "webhook payload"],
+      "outputs": ["receipt", "license token", "grant template access"],
+      "endpoints": {"POST /checkout": "create session", "POST /webhook": "handle provider webhook"}
+    },
+    {
+      "id": "campaign_bot",
+      "name": "Campaign / Viral Growth Bot",
+      "purpose": "Manage scheduled promotions, sponsor templates rotations, and optional social-share automation (owner-authorized).",
+      "run_mode": "scheduled/background",
+      "triggers": ["cron:daily", "admin:startCampaign"],
+      "inputs": ["campaign config", "promotional template ids"],
+      "outputs": ["campaign status", "content pushes (optional)"],
+      "constraints": {"no unsolicited posting": true}
+    }
+  ]
+}
