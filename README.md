@@ -1,6 +1,6 @@
 # Design Patterns — 0 → Expert
 
-A practical, senior-oriented design-pattern knowledge base for learning, daily revision, interviews, and long-term reference.
+A practical, senior-oriented design-pattern knowledge base for learning, daily revision, interviews, refactoring practice, and long-term reference.
 
 This repository focuses on **object/design patterns and application-level patterns**. Architecture styles such as microservices, event-driven architecture, DDD strategic design, and distributed-system topology belong in [software-architecture](https://github.com/YosrBennagra/software-architecture).
 
@@ -14,6 +14,7 @@ This repository focuses on **object/design patterns and application-level patter
 6. [Relationships & combinations](./05-relationships/pattern-combinations.md)
 7. [Smells, anti-patterns & overengineering](./06-antipatterns/README.md)
 8. [Java/Spring](./07-frameworks/java-spring.md) and [Angular](./07-frameworks/angular.md)
+9. [Practice & refactoring labs](./08-practice/README.md)
 
 ```mermaid
 flowchart LR
@@ -26,6 +27,7 @@ flowchart LR
   E --> R[Relationships]
   R --> A[Anti-pattern judgment]
   A --> J[Framework practice]
+  J --> P[Refactoring labs]
 ```
 
 ## Progress checklist
@@ -39,8 +41,10 @@ flowchart LR
 - [ ] Anti-patterns and overengineering
 - [ ] Java/Spring mappings
 - [ ] Angular mappings
-- [ ] Answer senior questions without notes
-- [ ] Apply patterns in a real refactoring and justify rejected alternatives
+- [ ] Complete pattern-comparison drills without notes
+- [ ] Complete refactoring labs without naming a pattern first
+- [ ] Explain rejected alternatives for each refactoring
+- [ ] Identify framework-provided pattern mechanics before hand-writing them
 
 ## Topic map
 
@@ -52,6 +56,7 @@ flowchart LR
 | Enterprise | Dependency Injection, Repository/Unit of Work, Specification, Service Layer, DTO/Mapper |
 | Judgment | code smells, trade-offs, anti-patterns, pattern combinations |
 | Framework practice | Spring IoC/AOP/proxies/templates; Angular DI/RxJS/interceptors |
+| Practice | refactoring labs, pattern comparisons, framework decisions |
 
 ## Knowledge-system links
 
@@ -68,4 +73,6 @@ Every important topic follows:
 3. **Senior Questions / Exercises**
 4. **Related Topics**
 
-A senior answer should usually be: **problem/forces → simplest option → candidate pattern → trade-offs → framework implications → failure modes**.
+Do not start a refactoring by saying “I need Strategy/Factory/etc.” Start with **problem → forces → simplest refactor → pattern only if it earns its complexity**.
+
+A strong senior answer is usually: **problem/forces → stable vs varying axis → simplest option → candidate pattern → rejected alternatives → framework implications → failure modes → tests**.
