@@ -23,3 +23,5 @@ Use this structure:
 7. **Tests** — what behavior proves the refactoring is safe?
 
 A senior solution can legitimately conclude **no pattern is needed**.
+
+[← Repository home](../README.md)

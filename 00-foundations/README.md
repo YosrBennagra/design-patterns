@@ -4,7 +4,6 @@
 >
 > **Pattern = named, reusable design trade-off.** Start from a recurring problem and forces, not from a catalog name. Prefer the simplest design that works.
 
-
 ```mermaid
 flowchart LR
   P[Problem + forces] --> S[Simplest design]
@@ -43,5 +42,8 @@ Pattern fever, cargo-cult UML, confusing framework mechanisms with pattern inten
 3. Name a pattern you would remove from an overengineered codebase and explain why.
 
 ## Related Topics
+- [Pattern selection](./pattern-selection.md)
 - [Programming principles](https://github.com/YosrBennagra/programming-principles)
 - [Software architecture](https://github.com/YosrBennagra/software-architecture)
+
+[← Repository home](../README.md)
