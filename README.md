@@ -15,6 +15,7 @@ This repository focuses on **object/design patterns and application-level patter
 7. [Smells, anti-patterns & overengineering](./06-antipatterns/README.md)
 8. [Java/Spring](./07-frameworks/java-spring.md) and [Angular](./07-frameworks/angular.md)
 9. [Practice & refactoring labs](./08-practice/README.md)
+10. [Expert production reasoning](./09-expert/README.md)
 
 ```mermaid
 flowchart LR
@@ -28,6 +29,7 @@ flowchart LR
   R --> A[Anti-pattern judgment]
   A --> J[Framework practice]
   J --> P[Refactoring labs]
+  P --> X[Expert production reasoning]
 ```
 
 ## Progress checklist
@@ -45,6 +47,10 @@ flowchart LR
 - [ ] Complete refactoring labs without naming a pattern first
 - [ ] Explain rejected alternatives for each refactoring
 - [ ] Identify framework-provided pattern mechanics before hand-writing them
+- [ ] Analyze pattern behavior under concurrency, transactions, retries, and async execution
+- [ ] Diagnose proxy/reactive/lifecycle edge cases without relying on annotations as magic
+- [ ] Write a one-page design decision record for a real refactoring
+- [ ] Prove a pattern-heavy refactor with appropriate unit/integration/concurrency tests
 
 ## Topic map
 
@@ -57,6 +63,7 @@ flowchart LR
 | Judgment | code smells, trade-offs, anti-patterns, pattern combinations |
 | Framework practice | Spring IoC/AOP/proxies/templates; Angular DI/RxJS/interceptors |
 | Practice | refactoring labs, pattern comparisons, framework decisions |
+| Expert | pattern combinations under failure, concurrency/lifecycle, Spring proxy edges, Angular reactive boundaries, testing and decision records |
 
 ## Knowledge-system links
 
@@ -76,3 +83,5 @@ Every important topic follows:
 Do not start a refactoring by saying “I need Strategy/Factory/etc.” Start with **problem → forces → simplest refactor → pattern only if it earns its complexity**.
 
 A strong senior answer is usually: **problem/forces → stable vs varying axis → simplest option → candidate pattern → rejected alternatives → framework implications → failure modes → tests**.
+
+An expert answer adds: **lifecycle → concurrency → transaction boundary → retry/async behavior → observability → migration path → rollback plan**.
