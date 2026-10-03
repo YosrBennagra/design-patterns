@@ -29,3 +29,5 @@ For a real design/refactoring, answer:
 12. What would make you remove the pattern later?
 
 A pattern is not “expert” because the class diagram is complicated. It is expert when its **operational consequences are understood**.
+
+[← Repository home](../README.md)
