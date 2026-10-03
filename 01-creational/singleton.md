@@ -2,36 +2,61 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** ensure one logical instance and controlled access. **Use rarely:** uniqueness must be a real invariant. **Cost:** global state/coupling.
-
+> **Intent:** guarantee one instance in a defined scope. **Question first:** what scope—thread, request, process, application context, cluster? **Main risk:** hidden global mutable state.
 
 ## Detailed Notes
 
-### What and why
-Singleton is often overused. The key question is whether the system truly requires one logical instance, not whether one object is convenient to reach globally.
+Singleton is often discussed as an implementation trick, but the senior question is **whether uniqueness is a real invariant and in which scope**.
 
-### How it works
-In plain Java, enum singletons avoid many classic implementation hazards. In Spring, default bean scope is singleton per application context, not one instance across a cluster.
+### Spring singleton is not cluster singleton
+The default Spring scope means roughly one bean instance **per ApplicationContext**. Ten service replicas normally mean ten instances.
 
-### When to use it
-Use for stateless shared services managed by a container or genuinely unique process-level coordinators. Prefer DI so dependencies remain explicit.
+```java
+@Service
+final class ExchangeRateCalculator {
+    // Safe as singleton because behavior is stateless.
+    Money convert(Money input, Rate rate) { /* ... */ }
+}
+```
 
-### When NOT to use it
-Avoid mutable global state, per-request/user data, test fixtures, or anything assumed to be singleton across multiple service instances.
+A mutable field such as `currentUser`, `lastOrder`, or request-specific buffers would be unsafe without explicit concurrency/lifecycle design.
 
-### Practical example
-A Spring Service can be singleton-scoped and stateless. Cluster-wide uniqueness needs distributed coordination, not Singleton.
+### Plain Java
+If true process-level singleton construction is needed, enum is robust:
 
-### Trade-offs
-Cheap sharing and simple lifecycle; can hide dependencies, create contention, and leak state across tests.
+```java
+enum MetricsRegistry {
+    INSTANCE;
+}
+```
 
-### Failure modes and common mistakes
-Confusing Spring scope with distributed uniqueness; mutable fields in singleton beans; getInstance everywhere instead of DI.
+But DI is usually preferable because dependencies stay explicit and tests can substitute them.
+
+### Cluster-wide uniqueness
+Use distributed coordination, leader election, leases, DB uniqueness/locks, or queue ownership. A class-level singleton cannot enforce cross-process uniqueness.
+
+### When to use
+- container-managed stateless shared service;
+- immutable configuration/cache component with designed synchronization;
+- process-level coordinator when process scope is truly correct.
+
+### Avoid
+- global service access via `getInstance()`;
+- request/user state;
+- shared mutable collections without concurrency policy;
+- “singleton” as a substitute for distributed locking.
+
+### Failure modes
+- tests influence each other through shared state;
+- races on mutable fields;
+- hidden dependencies;
+- assuming one scheduled job executes once across a cluster.
 
 ## Senior Questions / Exercises
-1. What does Spring singleton actually guarantee?
-2. How would you implement cluster-wide leader uniqueness?
-3. Why does mutable singleton state create concurrency bugs?
+1. Define Spring singleton scope precisely.
+2. How would you guarantee exactly one cluster leader at a time?
+3. Why can a stateless singleton be safe while a mutable one is not?
+4. A `@Scheduled` method must run once globally—design it correctly.
 
 ## Related Topics
 - [Dependency Injection](../04-enterprise/dependency-injection.md)

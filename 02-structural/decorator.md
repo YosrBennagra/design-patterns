@@ -2,36 +2,69 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** add behavior around an object dynamically while preserving its interface. **Signal:** optional behavior combinations. **Trade-off:** wrapper chains.
-
+> **Intent:** compose optional behavior around a component while preserving its contract. **Strength:** combinations without subclass explosion. **Risk:** hidden wrapper order.
 
 ## Detailed Notes
 
-### What and why
-Decorator composes behavior without subclass explosion. It is effective for orthogonal concerns that surround a core operation.
+Decorator is explicit composition around an interface.
 
-### How it works
-A decorator implements the same interface, stores a delegate, performs behavior before/after delegation, and can be stacked.
+```java
+interface DocumentStore {
+    Document get(DocumentId id);
+}
 
-### When to use it
-Use for metrics, caching, authorization checks, instrumentation, stream processing, Angular interceptors, and Spring proxy-like cross-cutting behavior.
+record MetricsStore(DocumentStore delegate, Meter meter) implements DocumentStore {
+    public Document get(DocumentId id) {
+        var timer = meter.start();
+        try { return delegate.get(id); }
+        finally { timer.stop(); }
+    }
+}
 
-### When NOT to use it
-Avoid deep invisible chains where order changes semantics unexpectedly, or when middleware/AOP is clearer.
+record CachingStore(DocumentStore delegate, Cache cache) implements DocumentStore {
+    public Document get(DocumentId id) {
+        return cache.get(id, () -> delegate.get(id));
+    }
+}
+```
 
-### Practical example
-Wrap DocumentStore with MetricsDocumentStore and CachingDocumentStore. Spring AOP often provides proxy-based decoration.
+### Order matters
 
-### Trade-offs
-Highly composable and open/closed; debugging order and identity can be harder.
+```text
+Metrics(Caching(Database))
+```
 
-### Failure modes and common mistakes
-Order bugs; double application; stateful non-thread-safe decorators; confusing Decorator with inheritance.
+measures client-visible latency including cache lookup.
+
+```text
+Caching(Metrics(Database))
+```
+
+measures only DB calls on cache misses.
+
+That difference must be intentional and tested.
+
+### Decorator vs Proxy
+Shape can be identical. Decorator's intent is to **add responsibility**; Proxy's intent is to **control access/stand in for** the subject.
+
+### Spring/Angular
+- Spring AOP/proxies can provide decorator-like cross-cutting behavior.
+- Angular HTTP interceptors form ordered wrappers around HTTP handling.
+
+Hand-written decorators are often better when ordering/domain semantics should remain explicit.
+
+### Failure modes
+- double retries/caches/metrics due to duplicate decoration;
+- unclear order;
+- wrapper forgets to delegate one method;
+- mutable decorator state is not thread-safe;
+- equality/identity assumptions break.
 
 ## Senior Questions / Exercises
-1. Decorator vs Proxy: same shape, different intent—explain.
-2. How would you test ordering of multiple decorators?
-3. When should Spring AOP replace hand-written decorators?
+1. Design and test metrics + cache + authorization ordering.
+2. When is AOP clearer, and when is explicit Decorator clearer?
+3. Decorator vs middleware/filter chain?
+4. Which behaviors should never be hidden in a decorator?
 
 ## Related Topics
 - [Proxy](./proxy.md)

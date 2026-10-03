@@ -2,36 +2,54 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** treat individual objects and object trees uniformly. **Signal:** recursive part-whole structures. **Trade-off:** common interface can become too broad.
-
+> **Intent:** treat leaves and containers uniformly in a recursive part-whole structure. **Risk:** forcing meaningless operations onto every component.
 
 ## Detailed Notes
 
-### What and why
-Composite lets clients operate on leaves and containers through the same abstraction. It is natural for trees when operations make sense for both.
+Composite fits true trees/recursive structures.
 
-### How it works
-A component interface defines common operations. Leaves perform them directly; composites delegate or aggregate across children.
+### Example — rule tree
 
-### When to use it
-Use for file trees, UI trees, organization structures, rule expressions, menus, and nested permissions.
+```java
+sealed interface Rule permits PredicateRule, AndRule, OrRule {
+    boolean evaluate(Context context);
+}
 
-### When NOT to use it
-Avoid forcing unrelated operations onto leaves solely to preserve a uniform interface.
+record PredicateRule(Predicate<Context> predicate) implements Rule {
+    public boolean evaluate(Context c) { return predicate.test(c); }
+}
 
-### Practical example
-A rule engine can model AndRule and OrRule composites plus predicate leaves behind one Rule.evaluate contract.
+record AndRule(List<Rule> children) implements Rule {
+    AndRule { children = List.copyOf(children); }
+    public boolean evaluate(Context c) {
+        return children.stream().allMatch(r -> r.evaluate(c));
+    }
+}
+```
 
-### Trade-offs
-Simplifies recursive client logic; can weaken interface segregation and make type-specific behavior harder.
+The client evaluates one `Rule` whether it is a leaf or a subtree.
 
-### Failure modes and common mistakes
-Exposing mutable child lists; meaningless methods on leaves; cycles in what should be a tree.
+### Design concerns
+- prefer immutable child collections where possible;
+- prevent cycles if semantics require a tree;
+- define traversal order;
+- consider stack depth for very deep trees;
+- keep the common interface narrow.
+
+### Composite + Iterator/Visitor
+Composite represents the structure. Iterator controls traversal. Visitor adds operations over a stable heterogeneous tree. Do not put every possible operation into the component interface.
+
+### Failure modes
+- exposing mutable internal children;
+- parent/child ownership unclear;
+- a “tree” can contain cycles and recursive methods never terminate;
+- component interface bloated with leaf-only/composite-only operations.
 
 ## Senior Questions / Exercises
-1. How would you make a Composite immutable?
-2. When should clients know leaf vs composite type?
-3. What traversal concerns belong in Iterator or Visitor?
+1. Make a Composite immutable and thread-safe.
+2. How would you detect/prevent cycles?
+3. When should traversal move to Iterator?
+4. Compare Composite with a simple recursive data structure plus pattern matching.
 
 ## Related Topics
 - [Iterator](../03-behavioral/iterator.md)

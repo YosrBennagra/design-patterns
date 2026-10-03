@@ -2,37 +2,55 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** provide a simpler task-oriented interface over a complex subsystem. **Signal:** callers orchestrate too many collaborators. **Trade-off:** facade can become a god service.
-
+> **Intent:** expose a cohesive task-oriented interface over a complicated subsystem. **Do not:** turn “simple interface” into one god service that owns every rule.
 
 ## Detailed Notes
 
-### What and why
-Facade reduces coupling to subsystem details by offering cohesive use-case-level operations. It should simplify access, not own every responsibility.
+Facade reduces the number of subsystem concepts a caller must understand.
 
-### How it works
-Expose a small API that coordinates existing components while preserving subsystem responsibilities.
+### Example
 
-### When to use it
-Use at module boundaries, SDK wrappers, application services, and Angular feature services that hide several lower-level calls.
+```java
+@Service
+final class CustomerOnboardingFacade {
+    private final IdentityService identity;
+    private final AccountService accounts;
+    private final WelcomeWorkflow welcome;
 
-### When NOT to use it
-Avoid a giant facade with unrelated use cases or duplicated domain logic.
+    OnboardingResult onboard(OnboardCustomer cmd) {
+        var identityId = identity.verify(cmd.identity());
+        var account = accounts.open(identityId, cmd.plan());
+        welcome.schedule(account.id());
+        return new OnboardingResult(account.id());
+    }
+}
+```
 
-### Practical example
-An OrderCheckoutFacade can coordinate pricing, inventory reservation, payment, and confirmation while each subsystem remains responsible for its own rules.
+The facade coordinates a use case but does not absorb identity/account rules.
 
-### Trade-offs
-Simplifies clients and localizes orchestration; can become an anemic catch-all.
+### Important boundary warning
+If calls cross networks/databases, a facade must not make those failure/transaction boundaries disappear conceptually. Callers may need pending/partial outcome semantics.
 
-### Failure modes and common mistakes
-Hiding transaction/network boundaries; swallowing partial failures; accumulating unrelated operations.
+### Facade vs Adapter
+- Facade: simplify a subsystem.
+- Adapter: translate an incompatible interface.
+
+### Facade vs Service Layer
+A Service Layer may expose the application's use cases and transaction boundaries. A Facade is a more general structural simplification concept. In business apps, one class may effectively serve both roles.
+
+### Failure modes
+- hundreds of unrelated methods;
+- hidden remote calls and unexpected latency;
+- swallowed partial failures;
+- facade returns internal subsystem entities;
+- all domain logic migrates into facade.
 
 ## Senior Questions / Exercises
-1. How is Facade different from an application service?
-2. What signs show a facade became a god object?
-3. Should a facade expose subsystem types?
+1. What signals indicate a facade became a god object?
+2. Should a facade return subsystem types?
+3. Design facade semantics for a workflow where one downstream step may remain pending.
+4. Compare an Angular feature facade with direct component use of five services.
 
 ## Related Topics
-- [Software architecture](https://github.com/YosrBennagra/software-architecture)
+- [Service Layer](../04-enterprise/service-layer.md)
 - [Mediator](../03-behavioral/mediator.md)
