@@ -2,37 +2,68 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** pass a request through ordered handlers. **Signal:** variable processing pipeline. **Trade-off:** order/completion can become implicit.
-
+> **Intent:** pass a request through an ordered sequence of handlers. **Decide explicitly:** all handlers run, first-match wins, or handlers may short-circuit.
 
 ## Detailed Notes
 
-### What and why
-Chain of Responsibility decouples senders from the exact handler sequence. It fits middleware-like pipelines where handlers can process, enrich, reject, or pass on.
+Chain of Responsibility is useful when processing is naturally staged and individual stages should be independently composable.
 
-### How it works
-Handlers implement a common contract and invoke the next handler, or a framework composes them. Decide whether all handlers run or first-match wins.
+### Java example
 
-### When to use it
-Use for HTTP filters/interceptors, validation pipelines, approval chains, security filters, and event stages.
+```java
+interface OrderCheck {
+    CheckResult check(OrderDraft draft);
+}
 
-### When NOT to use it
-Avoid when processing order must be obvious in one place and the chain makes control flow harder to understand.
+final class ValidationChain {
+    private final List<OrderCheck> checks;
 
-### Practical example
-Spring Security filter chains and servlet filters are practical variants; Angular HTTP interceptors form a client-side chain.
+    ValidationChain(List<OrderCheck> checks) {
+        this.checks = List.copyOf(checks);
+    }
 
-### Trade-offs
-Composable and extensible; ordering, short-circuiting, and error propagation need explicit rules.
+    CheckResult run(OrderDraft draft) {
+        for (var check : checks) {
+            var result = check.check(draft);
+            if (!result.accepted()) return result; // explicit short-circuit
+        }
+        return CheckResult.ok();
+    }
+}
+```
 
-### Failure modes and common mistakes
-Uncontrolled ordering; hidden shared state; swallowed errors; missing terminal behavior.
+This explicit loop is often clearer than handlers containing mutable `next` pointers.
+
+### Framework examples
+- servlet filters;
+- Spring Security filter chain;
+- Spring MVC interceptors;
+- Angular HTTP interceptors.
+
+The frameworks provide ordering/lifecycle; your job is to understand short-circuit and exception semantics.
+
+### Chain vs Pipeline
+A pipeline usually assumes every stage transforms/passes output to the next. Chain of Responsibility emphasizes **which handler, if any, handles/terminates the request**. Real middleware often blends both ideas.
+
+### Ordering is part of correctness
+Authentication before authorization, decompression before body validation, correlation IDs before logging. Treat order as configuration with tests, not accidental bean discovery.
+
+### Failure modes
+- hidden order;
+- handler swallows exception and chain continues incorrectly;
+- shared mutable request state;
+- handler performs expensive work before a cheap rejecting check;
+- duplicate handler registration;
+- no terminal/default behavior.
 
 ## Senior Questions / Exercises
-1. How would you make handler order explicit and testable?
-2. When is Pipeline a better model than Chain of Responsibility?
-3. How do Spring Security filters illustrate short-circuiting?
+1. How do you make order explicit in Spring?
+2. Compare validation chain with one validator class.
+3. Design short-circuit semantics for authentication/authorization.
+4. Which checks should be ordered first for cost and security?
+5. When does a pipeline become easier to reason about than a chain?
 
 ## Related Topics
 - [Decorator](../02-structural/decorator.md)
 - [Command](./command.md)
+- [Java/Spring](../07-frameworks/java-spring.md)

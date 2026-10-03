@@ -2,37 +2,63 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** add operations over a stable object structure without modifying element classes. **Signal:** many operations over a stable type hierarchy. **Trade-off:** new element types are expensive.
-
+> **Intent:** add many operations over a stable heterogeneous structure. **Great when:** element types are stable, operations grow. **Bad when:** new element types are frequent.
 
 ## Detailed Notes
 
-### What and why
-Visitor uses double dispatch to move operations out of element classes. It is powerful when element types are stable and operations change frequently.
+Visitor moves operations out of element classes using double dispatch.
 
-### How it works
-Each element accepts a visitor and calls the overload for its concrete type. Modern sealed types/pattern matching can sometimes be simpler.
+### Classic shape
 
-### When to use it
-Use for ASTs, compilers, document models, and stable heterogeneous structures needing many operations.
+```java
+sealed interface Expr permits NumberExpr, AddExpr {
+    <R> R accept(ExprVisitor<R> visitor);
+}
 
-### When NOT to use it
-Avoid when element types change frequently or pattern matching over sealed hierarchies is clearer.
+record NumberExpr(int value) implements Expr {
+    public <R> R accept(ExprVisitor<R> v) { return v.visitNumber(this); }
+}
 
-### Practical example
-An AST can support type checking, code generation, and pretty printing as separate visitors.
+record AddExpr(Expr left, Expr right) implements Expr {
+    public <R> R accept(ExprVisitor<R> v) { return v.visitAdd(this); }
+}
 
-### Trade-offs
-Keeps operations cohesive and elements focused; couples every visitor to the full element set.
+interface ExprVisitor<R> {
+    R visitNumber(NumberExpr n);
+    R visitAdd(AddExpr a);
+}
+```
 
-### Failure modes and common mistakes
-Visitor with constantly changing element types; reflection instead of clear dispatch; visitors with unpredictable side effects.
+Add evaluators, printers, type checkers, code generators as separate visitors.
+
+### Modern Java alternative
+With sealed hierarchies and exhaustive pattern matching, a function using `switch` can be much simpler. Visitor remains useful when:
+- operations are numerous and deserve separate types;
+- compatibility with classic OO dispatch matters;
+- language/version constraints limit pattern matching.
+
+### Visitor + Composite
+Composite gives the tree; Visitor gives operations over element variants.
+
+### Evolution trade-off
+Adding a new operation → add one visitor, elements unchanged.
+Adding a new element type → every visitor must change.
+
+This is the inverse pressure of putting methods on element types.
+
+### Failure modes
+- element hierarchy changes weekly;
+- visitor becomes mutable shared bag of state;
+- generic reflection used instead of explicit dispatch;
+- business behavior that belongs on the domain object is moved out merely to “use Visitor.”
 
 ## Senior Questions / Exercises
-1. Why is Visitor good for stable element types?
-2. How do Java sealed classes and pattern matching change the trade-off?
-3. Visitor vs Strategy: what varies?
+1. Visitor vs sealed-class pattern matching in modern Java?
+2. Which change axis is optimized?
+3. Design type-check + render operations for an AST.
+4. How would you carry traversal context without unsafe mutable visitor state?
 
 ## Related Topics
 - [Composite](../02-structural/composite.md)
+- [Iterator](./iterator.md)
 - [Computer science fundamentals](https://github.com/YosrBennagra/computer-science-fundamentals)
