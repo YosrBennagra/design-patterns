@@ -2,36 +2,67 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** vary abstraction and implementation independently. **Signal:** two independent dimensions cause subclass explosion. **Trade-off:** composition/indirection.
-
+> **Intent:** split two independently varying dimensions instead of multiplying subclasses. **Signal:** Cartesian-product hierarchy such as ReportType × Renderer.
 
 ## Detailed Notes
 
-### What and why
-Bridge replaces a Cartesian-product inheritance hierarchy with two composable hierarchies. It matters when both dimensions genuinely evolve independently.
+Bridge replaces inheritance across two axes with composition.
 
-### How it works
-The abstraction holds an implementation interface and delegates implementation-specific work. Each side can then gain variants independently.
+```mermaid
+classDiagram
+  class Report {
+    <<abstract>>
+    -Renderer renderer
+    +generate()
+  }
+  class SummaryReport
+  class AuditReport
+  class Renderer {
+    <<interface>>
+    +render(model)
+  }
+  class PdfRenderer
+  class HtmlRenderer
+  Report <|-- SummaryReport
+  Report <|-- AuditReport
+  Report --> Renderer
+  Renderer <|.. PdfRenderer
+  Renderer <|.. HtmlRenderer
+```
 
-### When to use it
-Use when UI/control logic varies separately from device/provider/platform implementation, or when two axes multiply subclasses.
+Without Bridge, two report types × two renderers already create four subclasses; adding dimensions multiplies combinations.
 
-### When NOT to use it
-Avoid when only one dimension varies or a simple Strategy is enough.
+### Java sketch
 
-### Practical example
-Reporting variants such as SummaryReport and AuditReport can use rendering implementations such as PdfRenderer and HtmlRenderer.
+```java
+interface Renderer { byte[] render(ReportModel model); }
 
-### Trade-offs
-Controls subclass explosion and improves substitution; increases collaborating types.
+abstract class Report {
+    protected final Renderer renderer;
+    protected Report(Renderer renderer) { this.renderer = renderer; }
+    abstract byte[] generate();
+}
+```
 
-### Failure modes and common mistakes
-Introducing Bridge before two variation axes exist; confusing it with Adapter.
+DI can assemble any abstraction/implementation combination.
+
+### Bridge vs Strategy
+Both use composition. Strategy usually varies an **algorithm/policy inside one conceptual operation**. Bridge deliberately separates **two long-lived abstraction hierarchies** that evolve independently.
+
+### Bridge vs Adapter
+Bridge is designed up front to separate axes. Adapter is usually introduced to make an existing incompatible interface fit.
+
+### Failure modes
+- two variation axes do not really exist;
+- abstraction leaks implementation-specific methods;
+- one side changes only once yet introduces a whole hierarchy;
+- Bridge used where a single Strategy interface is enough.
 
 ## Senior Questions / Exercises
-1. Identify the two variation axes in a real codebase before proposing Bridge.
-2. Bridge vs Strategy: what is structurally similar and intent-wise different?
-3. How can DI assemble a Bridge?
+1. Show the subclass count before/after Bridge for 4 report types × 3 renderers.
+2. Identify two real independent variation axes before proposing Bridge.
+3. When is Strategy simpler?
+4. How would Spring DI assemble Bridge combinations?
 
 ## Related Topics
 - [Strategy](../03-behavioral/strategy.md)

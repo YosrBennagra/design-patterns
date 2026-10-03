@@ -2,36 +2,56 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** define an algorithm skeleton with overridable steps. **Signal:** workflows are mostly identical with controlled variation. **Trade-off:** inheritance coupling.
-
+> **Intent:** keep an invariant algorithm skeleton in a base type while subclasses customize selected steps. **Main cost:** inheritance coupling and fragile hooks.
 
 ## Detailed Notes
 
-### What and why
-Template Method reuses workflow structure through inheritance. It can be effective in frameworks, while composition is often more flexible in application code.
+Template Method is most appropriate when a framework/base class truly owns lifecycle and wants carefully controlled extension points.
 
-### How it works
-A base class defines a sequence and protected hooks/abstract steps. Subclasses customize selected points.
+### Classic Java shape
 
-### When to use it
-Use when a framework controls lifecycle and extension points are deliberate and stable.
+```java
+abstract class ImportJob {
+    public final ImportResult run(Input input) {
+        validate(input);
+        var rows = parse(input);
+        var normalized = normalize(rows);
+        return persist(normalized);
+    }
 
-### When NOT to use it
-Avoid deep inheritance, fragile hooks, or cases where Strategy/composition expresses variation more locally.
+    protected abstract List<Row> parse(Input input);
+    protected List<Row> normalize(List<Row> rows) { return rows; }
+    protected abstract ImportResult persist(List<Row> rows);
+}
+```
 
-### Practical example
-Spring template classes such as JdbcTemplate represent the broader template/callback family: stable resource/error workflow with customizable work.
+The template method `run` is final so subclasses cannot bypass required steps.
 
-### Trade-offs
-Centralizes invariant workflow; inheritance makes variation less flexible and can create fragile base classes.
+### Template/callback family in Spring
+`JdbcTemplate` is conceptually related but uses composition/callbacks rather than requiring your class hierarchy. The framework owns connection/resource/error boilerplate and you supply the operation.
 
-### Failure modes and common mistakes
-Calling overridable methods from constructors; too many hooks; subclasses bypassing required steps.
+### Template Method vs Strategy
+Use Template Method when inheritance/lifecycle ownership is stable and intentional. Prefer Strategy/composition when one step/policy should vary independently or be selected at runtime.
+
+### Hook design
+Hooks should:
+- have narrow contracts;
+- avoid relying on partially initialized state;
+- document whether calling super is required;
+- avoid exposing every internal step “just in case.”
+
+### Failure modes
+- overridable method called from constructor;
+- subclass can skip validation/security;
+- dozens of protected hooks;
+- subclasses depend on undocumented base-class internals;
+- base change silently breaks subclasses.
 
 ## Senior Questions / Exercises
-1. Template Method vs Strategy: when does composition win?
-2. What makes a hook safe and stable?
-3. Identify a fragile-base-class risk.
+1. Refactor Template Method into Strategy and compare.
+2. Why should invariant workflow methods often be final?
+3. What makes a framework hook safe?
+4. Identify a fragile-base-class problem in a real inheritance tree.
 
 ## Related Topics
 - [Strategy](./strategy.md)

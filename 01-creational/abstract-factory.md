@@ -2,38 +2,64 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** create families of related objects without naming concrete classes. **Use when:** products must vary together. **Cost:** adding a new product role is expensive.
-
+> **Intent:** create a **compatible family** of related products. **Strength:** adding a new family is easy. **Weakness:** adding a new product role changes every factory.
 
 ## Detailed Notes
 
-### What and why
-Abstract Factory centralizes creation of a compatible family of products. The key value is family consistency, not merely avoiding constructors.
+Abstract Factory matters when several created objects must vary **together** and remain compatible.
 
-### How it works
-Define a factory interface with methods for each product role. Each concrete factory returns a coherent family. Clients depend only on product and factory abstractions.
+### Example — payment provider family
 
-### When to use it
-Use for pluggable platform families, environment-specific integration clients, or test/production object families that must remain compatible.
+```java
+interface PaymentFamily {
+    PaymentClient payments();
+    RefundClient refunds();
+    WebhookVerifier webhooks();
+}
 
-### When NOT to use it
-Avoid for a single product, unrelated products, or when DI profiles/configuration express the same choice more transparently.
+final class AcmePaymentFamily implements PaymentFamily {
+    public PaymentClient payments() { return new AcmePaymentClient(/*...*/); }
+    public RefundClient refunds() { return new AcmeRefundClient(/*...*/); }
+    public WebhookVerifier webhooks() { return new AcmeWebhookVerifier(/*...*/); }
+}
+```
 
-### Practical example
-A payment integration factory can supply PaymentClient, RefundClient, and WebhookVerifier for a provider while preserving family compatibility.
+A Stripe-like family and an Acme-like family can be swapped without mixing a payment client from one provider with a webhook verifier from another.
+
+### What it protects
+The pattern preserves a **family invariant**. That is its distinguishing value.
+
+### Spring assembly
+A Spring application may instead bind one coherent provider configuration using profiles, conditional beans, or configuration classes. Prefer that when the container can express the family clearly.
+
+### When to use
+- platform-specific UI/runtime families;
+- payment/provider SDK families;
+- production vs simulation/test families where compatibility matters;
+- protocol-version families.
+
+### When not to use
+- only one product varies;
+- products are unrelated;
+- the factory becomes a giant container/service locator;
+- adding product roles is frequent.
 
 ### Trade-offs
-Strong family consistency and easy family replacement; weaker extensibility when adding a brand-new product role because all factories must change.
+Easy family replacement; difficult product-axis extension. More interfaces can improve boundary clarity but add ceremony.
 
-### Failure modes and common mistakes
-Using it as a service locator; allowing downcasts; mixing unrelated products into one huge factory.
+### Failure modes
+- `getService(Class<T>)` generic locator disguised as factory.
+- Downcasting to concrete family types.
+- One “factory” with 30 unrelated products.
+- Shared credentials/config duplicated inconsistently across products.
 
 ## Senior Questions / Exercises
-1. Why is Abstract Factory strong for adding families but weak for adding product roles?
-2. How would you model provider-specific clients in Spring without a service locator?
-3. Compare Abstract Factory with configuration + DI profiles.
+1. Why is Abstract Factory good for new families but bad for new product roles?
+2. Compare provider `@Configuration` classes with a hand-written Abstract Factory.
+3. Model payment, refund, and webhook clients so provider families cannot be accidentally mixed.
+4. What test proves family compatibility?
 
 ## Related Topics
 - [Factory Method](./factory-method.md)
 - [Dependency Injection](../04-enterprise/dependency-injection.md)
-- [Software architecture](https://github.com/YosrBennagra/software-architecture)
+- [Adapter](../02-structural/adapter.md)

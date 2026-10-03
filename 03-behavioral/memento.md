@@ -2,37 +2,64 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** capture and restore state without exposing internals. **Signal:** undo/checkpoint requirements. **Trade-off:** snapshot cost.
-
+> **Intent:** capture restorable state without exposing internals. **Works best:** bounded local undo/checkpoints. **Does not undo:** external real-world side effects.
 
 ## Detailed Notes
 
-### What and why
-Memento encapsulates a state snapshot so an originator can later restore it while preserving encapsulation.
+Memento lets an originator create an opaque snapshot and later restore from it.
 
-### How it works
-The originator creates/restores opaque mementos; a caretaker stores them without interpreting internals.
+### Immutable snapshot example
 
-### When to use it
-Use for editors, simulations, workflow checkpoints, and bounded undo histories.
+```java
+record EditorMemento(String text, int cursor) {}
 
-### When NOT to use it
-Avoid large unbounded snapshots, sensitive state snapshots, or distributed workflows where compensation is more appropriate.
+final class Editor {
+    private String text;
+    private int cursor;
 
-### Practical example
-An editor stores immutable document-state mementos for undo/redo.
+    EditorMemento snapshot() {
+        return new EditorMemento(text, cursor);
+    }
 
-### Trade-offs
-Simple rollback model; snapshots can be expensive and cannot undo external side effects.
+    void restore(EditorMemento m) {
+        this.text = m.text();
+        this.cursor = m.cursor();
+    }
+}
+```
 
-### Failure modes and common mistakes
-Snapshotting credentials; retaining huge graphs; assuming emails/payments disappear on restore.
+### Memory strategy
+For large objects, full snapshots can be expensive. Alternatives:
+- bounded history;
+- structural sharing/immutable persistent data structures;
+- deltas;
+- command-based undo;
+- periodic checkpoints + event log.
+
+### Memento vs event sourcing
+Memento stores **state snapshots for restoration**. Event sourcing stores **domain facts as the source of truth** and reconstructs state by replay. They solve different problems.
+
+### Distributed boundary
+Restoring database state cannot unsend email, refund a card automatically, or retrieve a shipped package. Use compensation/workflow state for external effects.
+
+### Security
+Snapshots may contain secrets/PII. Treat persistence, encryption, retention, and access as seriously as the original state.
+
+### Failure modes
+- unbounded undo memory;
+- shallow snapshot of mutable graph;
+- snapshot schema incompatible after application upgrade;
+- restoring identity/version fields incorrectly;
+- using memento to fake distributed rollback.
 
 ## Senior Questions / Exercises
-1. Memento vs event sourcing: what is stored and why?
-2. How would you bound undo memory?
-3. When must compensation replace rollback?
+1. Full snapshot vs delta: when does each win?
+2. How would you version persisted mementos?
+3. Memento vs event sourcing?
+4. Design undo for a document where images are 100 MB each.
+5. Why can compensation be required even after restoring local state?
 
 ## Related Topics
 - [Prototype](../01-creational/prototype.md)
-- [Software architecture](https://github.com/YosrBennagra/software-architecture)
+- [Command](./command.md)
+- [System design: transactions](https://github.com/YosrBennagra/system-design)

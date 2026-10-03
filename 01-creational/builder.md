@@ -2,36 +2,65 @@
 
 > **Wall Note / A4**
 >
-> **Intent:** construct a complex object step by step while keeping valid construction readable. **Use when:** many optional values or construction invariants. **Cost:** extra builder API.
-
+> **Intent:** make complex construction readable and validate the final object. **Best use:** immutable objects with many optional/conditional values. **Smell:** Builder used to hide an object with too many responsibilities.
 
 ## Detailed Notes
 
-### What and why
-Builder makes complex construction explicit and readable. Its strongest form protects invariants by validating at build time rather than merely replacing telescoping constructors.
+Builder is valuable when construction has enough structure that a long constructor or many overloaded constructors obscure meaning.
 
-### How it works
-Collect construction parameters in a builder, validate combinations, then create an immutable target. Staged builders can encode mandatory ordering in types but should be used sparingly.
+### Java example
 
-### When to use it
-Use for immutable configuration objects, test-data construction, domain objects with many optional values, and APIs where named construction is clearer than long parameter lists.
+```java
+var query = ReportQuery.builder()
+    .tenantId(tenantId)
+    .from(from)
+    .to(to)
+    .format(PDF)
+    .includeArchived(false)
+    .sortBy(CREATED_AT)
+    .build();
+```
 
-### When NOT to use it
-Avoid when a constructor or static factory with a few parameters is already clear. Do not use Builder to mask a target object with too many responsibilities.
+The `build()` step should protect invariants:
 
-### Practical example
-A ReportRequest with filters, format, locale, sorting, and date range can benefit from a builder.
+```java
+public ReportQuery build() {
+    if (tenantId == null) throw new IllegalStateException("tenantId required");
+    if (from != null && to != null && from.isAfter(to)) {
+        throw new IllegalStateException("invalid date range");
+    }
+    return new ReportQuery(this);
+}
+```
 
-### Trade-offs
-Readable calls and centralized validation; more code and potential duplication. Mutable builders should not be shared across threads.
+### Builder vs alternatives
 
-### Failure modes and common mistakes
-Allowing invalid final states; putting workflows in the builder; blindly generating builders on entities with invariants.
+| Situation | Prefer |
+|---|---|
+| 2–4 obvious required values | constructor/record |
+| named creation rule | static factory |
+| many optional settings | Builder |
+| many mandatory ordered stages | possibly staged builder |
+| target keeps accumulating unrelated fields | redesign target, not Builder |
+
+### JPA warning
+Generated builders on persistence entities can bypass invariants, create partially initialized aggregates, and encourage direct construction where domain methods should own state changes.
+
+### Concurrency
+Builders are normally mutable construction helpers. Treat them as short-lived and thread-confined.
+
+### Failure modes
+- `build()` accepts invalid combinations.
+- Builder duplicates all setters and adds no value.
+- Workflow/network calls inside builder methods.
+- Reusing one mutable builder across requests/threads.
+- Lombok-generated builder bypasses important constructor/domain logic.
 
 ## Senior Questions / Exercises
 1. When is a static factory clearer than Builder?
-2. Design a builder that guarantees two mandatory fields before build.
-3. What problems arise from builders on JPA entities?
+2. Design a builder for mutually exclusive `csvOptions` vs `pdfOptions`.
+3. Why can builders be dangerous on JPA aggregates?
+4. What invariant belongs in `build()` versus a domain service?
 
 ## Related Topics
 - [Factory Method](./factory-method.md)
