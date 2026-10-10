@@ -1,6 +1,6 @@
 # Design Patterns — 0 → Expert
 
-> **Cheat sheet:** [CHEAT-SHEET.md](CHEAT-SHEET.md) (dense one-to-two-page revision sheet to print and keep on the wall)
+> **Cheat sheet:** [CHEAT-SHEET.md](CHEAT-SHEET.md) (dense one-to-two-page revision sheet to print and keep on the wall) · **Hub:** [software-engineer-roadmap](https://github.com/YosrBennagra/software-engineer-roadmap) · **Full-stack roadmap:** [fullstack-engineer-roadmap](https://github.com/YosrBennagra/fullstack-engineer-roadmap)
 
 A practical, senior-oriented design-pattern knowledge base for learning, daily revision, interviews, refactoring practice, and long-term reference.
 
