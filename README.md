@@ -1,5 +1,7 @@
 # Design Patterns — 0 → Expert
 
+> **Cheat sheet:** [CHEAT-SHEET.md](CHEAT-SHEET.md) (dense one-to-two-page revision sheet to print and keep on the wall)
+
 A practical, senior-oriented design-pattern knowledge base for learning, daily revision, interviews, refactoring practice, and long-term reference.
 
 This repository focuses on **object/design patterns and application-level patterns**. Architecture styles such as microservices, event-driven architecture, DDD strategic design, and distributed-system topology belong in [software-architecture](https://github.com/YosrBennagra/software-architecture).
